@@ -1,0 +1,13 @@
+{
+  "org": "my-org",
+  "labels": {
+    "optIn": "agent-handover",
+    "analyzed": "agent-handover-analyzed",
+    "monitoring": "agent-handover-monitoring"
+  },
+  "timeouts": {
+    "nit": 60,
+    "conflict": 30
+  },
+  "mergeStrategy": "merge"
+}
