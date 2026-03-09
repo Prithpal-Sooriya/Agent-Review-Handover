@@ -1,7 +1,7 @@
 # Specification Quality Checklist: Agent Handover for Pull Requests
 
-**Purpose**: Validate specification completeness and quality before proceeding to planning  
-**Created**: 2025-03-09  
+**Purpose**: Validate specification completeness and quality before proceeding to planning\
+**Created**: 2025-03-09\
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -32,4 +32,5 @@
 ## Notes
 
 - Validation completed 2025-03-09. All items passed.
-- FR-011 describes an architecture constraint (cloud/local, FOSS) from the user; retained as a design requirement, not implementation detail.
+- FR-011 describes an architecture constraint (cloud/local, FOSS) from the user; retained as a
+  design requirement, not implementation detail.
