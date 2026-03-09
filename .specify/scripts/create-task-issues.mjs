@@ -6,6 +6,7 @@
 
 import { readFileSync, unlinkSync, writeFileSync } from "fs";
 import { execSync } from "child_process";
+import process from "node:process";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -41,7 +42,9 @@ for (const desc of tasks) {
   } finally {
     try {
       unlinkSync(bodyPath);
-    } catch (_) {}
+    } catch (_) {
+      // Ignore if file already removed or missing
+    }
   }
 }
 
