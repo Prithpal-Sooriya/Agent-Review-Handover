@@ -4,8 +4,9 @@
  * Run from repo root. Requires: gh CLI, authenticated to GitHub.
  */
 
-import { readFileSync, writeFileSync, unlinkSync } from "fs";
+import { readFileSync, unlinkSync, writeFileSync } from "fs";
 import { execSync } from "child_process";
+import process from "node:process";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -26,16 +27,24 @@ const maxTitleLen = 250;
 
 for (const desc of tasks) {
   const title = desc.length > maxTitleLen ? desc.slice(0, maxTitleLen - 3) + "..." : desc;
-  const body = `Task from spec 001-agent-pr-handover.\n\n**Description:**\n${desc}\n\n---\nSource: \`specs/001-agent-pr-handover/tasks.md\``;
+  const body =
+    `Task from spec 001-agent-pr-handover.\n\n**Description:**\n${desc}\n\n---\nSource: \`specs/001-agent-pr-handover/tasks.md\``;
   const bodyPath = join(tmpdir(), `gh-issue-body-${process.pid}-${tasks.indexOf(desc)}.txt`);
   writeFileSync(bodyPath, body, "utf8");
   try {
-    execSync(`gh issue create --repo "${REPO}" --title ${JSON.stringify(title)} --body-file "${bodyPath}"`, {
-      stdio: "inherit",
-      maxBuffer: 10 * 1024 * 1024,
-    });
+    execSync(
+      `gh issue create --repo "${REPO}" --title ${JSON.stringify(title)} --body-file "${bodyPath}"`,
+      {
+        stdio: "inherit",
+        maxBuffer: 10 * 1024 * 1024,
+      },
+    );
   } finally {
-    try { unlinkSync(bodyPath); } catch (_) {}
+    try {
+      unlinkSync(bodyPath);
+    } catch (_) {
+      // Ignore if file already removed or missing
+    }
   }
 }
 
