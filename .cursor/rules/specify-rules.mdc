@@ -1,0 +1,35 @@
+---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Agent-Review-Handover Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-03-09
+
+## Active Technologies
+
+- TypeScript (Deno 2.x / latest LTS) + Deno standard library and platform APIs; Octokit or native fetch for GitHub; Open Props (CSS) and Open Props UI for frontend design tokens/components; no UI framework. (001-agent-pr-handover)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+npm test && npm run lint
+
+## Code Style
+
+TypeScript (Deno 2.x / latest LTS): Follow standard conventions
+
+## Recent Changes
+
+- 001-agent-pr-handover: Added TypeScript (Deno 2.x / latest LTS) + Deno standard library and platform APIs; Octokit or native fetch for GitHub; Open Props (CSS) and Open Props UI for frontend design tokens/components; no UI framework.
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->
