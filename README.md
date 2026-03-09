@@ -63,5 +63,8 @@ deno task fmt
 deno task dev
 ```
 
+**Note:** Use `deno task test` (not plain `deno test`). The task adds the `--allow-read` and
+`--allow-write` flags tests need; otherwise you’ll see permission errors.
+
 Dependencies are resolved automatically from `deno.json` (JSR and npm); no separate `npm install` is
 required.
