@@ -5,13 +5,13 @@
 
 **Tests**: Contract tests at task interface, agent runner, HTTP API, and trigger context (per plan.md); unit tests for task logic with mocked GitHub and agent.
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+**Organization**: Tasks are grouped by user story to enable independent implementation and testing. Each task touches **at most one file** and has a **single clear outcome** so it can be assigned to a single agent (e.g. Sonnet, SLM) or worktree.
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (US1, US2, US3, US4)
-- Include exact file paths in descriptions
+- **[P]**: Can run in parallel (different files, no dependencies on other same-phase tasks)
+- **[Story]**: User story (US1, US2, US3, US4)
+- Include exact file path in every task description
 
 ## Path Conventions
 
@@ -23,11 +23,10 @@
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-**Purpose**: Project initialization and basic structure per plan.md and research.md.
+**Purpose**: Project initialization and basic structure per plan.md.
 
-- [ ] T001 Create project structure per plan: src/core, src/core/tasks, src/transport/http, src/transport/actions, frontend, tests/contract, tests/integration, tests/unit
-- [ ] T002 Initialize Deno project with deno.json and dependencies (Octokit or native fetch; Deno standard library)
-- [ ] T003 [P] Configure linting and formatting (deno lint, deno fmt) for src/ and tests/
+- [ ] T001 Create directory structure: src/core, src/core/tasks, src/transport/http, src/transport/actions, frontend, tests/contract, tests/integration, tests/unit
+- [ ] T002 Create deno.json with Deno project config, dependencies (Octokit or native fetch; Deno std), and lint/format config (deno lint, deno fmt) at repository root
 
 ---
 
@@ -37,14 +36,15 @@
 
 **⚠️ CRITICAL**: Foundation must be complete before any story implementation.
 
-- [ ] T004 Implement RunConfig (org, labels, timeouts, merge strategy) and config loading in src/config.ts
-- [ ] T005 [P] Define task types (TaskResult, TaskSpec, TaskKind, payload types) in src/core/task-types.ts per contracts/task-interface.md
-- [ ] T006 [P] Define AgentRunner interface and input/result types in src/core/runner.ts per contracts/agent-runner.md
-- [ ] T007 [P] Define TriggerContext type and GitHub client abstraction interface in src/core (e.g. trigger-context types; GitHubClient interface for Octokit/fetch)
-- [ ] T008 Implement GitHub client abstraction (Octokit or fetch) in src/core/github.ts
-- [ ] T009 [P] Contract test for task interface: mock github and agent, assert task result shape and idempotency in tests/contract/task-interface_test.ts
-- [ ] T010 [P] Contract test for AgentRunner: mock implementation returning fixed results, assert interface in tests/contract/agent-runner_test.ts
-- [ ] T011 [P] Contract test for TriggerContext: build context and pass to stub workflow in tests/contract/trigger-context_test.ts
+- [ ] T003 Implement RunConfig (org, labels, timeouts, merge strategy) and config loading in src/config.ts
+- [ ] T004 [P] Define task types (TaskResult, TaskSpec, TaskKind, payload types) in src/core/task-types.ts per contracts/task-interface.md
+- [ ] T005 [P] Define AgentRunner interface and input/result types in src/core/runner.ts per contracts/agent-runner.md
+- [ ] T006 [P] Define TriggerContext type in src/core/trigger-context.ts per contracts/trigger-context.md
+- [ ] T007 Define GitHubClient interface only (no implementation) in src/core/github.ts
+- [ ] T008 Implement GitHub client (Octokit or fetch) in src/core/github.ts
+- [ ] T009 [P] Contract test for task interface: mock github and agent, assert result shape and idempotency in tests/contract/task-interface_test.ts
+- [ ] T010 [P] Contract test for AgentRunner: mock implementation, assert interface in tests/contract/agent-runner_test.ts
+- [ ] T011 [P] Contract test for TriggerContext: build context and pass to stub in tests/contract/trigger-context_test.ts
 
 **Checkpoint**: Foundation ready — user story implementation can begin.
 
@@ -58,9 +58,8 @@
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Implement analyze-pr task in src/core/tasks/analyze-pr.ts (payload: repo, prNumber; call AgentRunner.analyze; return TaskResult + report)
-- [ ] T013 [US1] Wire analyze-pr to update PR description and set state labels (e.g. agent-handover-analyzed) via GitHub client in src/core/tasks/analyze-pr.ts
-- [ ] T014 [US1] Unit tests for analyze-pr with mocked GitHub and agent in tests/unit/analyze-pr_test.ts
+- [ ] T012 [P] [US1] Implement analyze-pr task (payload: repo, prNumber; call AgentRunner.analyze; update PR description and set state labels) in src/core/tasks/analyze-pr.ts
+- [ ] T013 [P] [US1] Add unit tests for analyze-pr with mocked GitHub and agent in tests/unit/analyze-pr_test.ts
 
 **Checkpoint**: User Story 1 is fully functional; PR + opt-in label → report in description.
 
@@ -68,16 +67,16 @@
 
 ## Phase 4: User Story 2 - Comment Response Handling (Priority: P2)
 
-**Goal**: When an org member comments on an opted-in PR, the system classifies the comment (nit vs discussion vs unclear), replies to the comment when the agent picks it up, and for nits applies the fix and notifies the reviewer; for larger feedback acknowledges without auto-applying; for unclear asks clarifying questions.
+**Goal**: When an org member comments on an opted-in PR, the system classifies the comment (nit vs discussion vs unclear), replies when the agent picks it up, resolves nits and notifies reviewer, acknowledges larger feedback, asks clarifying questions when unclear.
 
 **Independent Test**: Org member leaves a nit-style and a discussion-style comment on an opted-in PR; verify classification, resolution (nits), acknowledgment (discussion), and reply-on-pickup.
 
 ### Implementation for User Story 2
 
-- [ ] T015 [P] [US2] Implement classify-comment task in src/core/tasks/classify-comment.ts (payload: repo, prNumber, commentId; org membership check; return kind: nit | discussion | unclear)
-- [ ] T016 [US2] Implement resolve-nit task in src/core/tasks/resolve-nit.ts with comment reply on pickup and conflict-avoid behavior (verify PR/description unchanged before applying) per spec FR-004a and FR-004b
-- [ ] T017 [US2] Ensure only comments from organization members are processed in src/core/tasks/classify-comment.ts (GitHub API membership check per FR-003)
-- [ ] T018 [US2] Unit tests for classify-comment and resolve-nit with mocked GitHub and agent in tests/unit/classify-comment_test.ts and tests/unit/resolve-nit_test.ts
+- [ ] T014 [P] [US2] Implement classify-comment task (payload: repo, prNumber, commentId; org membership check; return kind: nit | discussion | unclear) in src/core/tasks/classify-comment.ts
+- [ ] T015 [US2] Implement resolve-nit task (reply on pickup, conflict-avoid before applying) in src/core/tasks/resolve-nit.ts
+- [ ] T016 [P] [US2] Add unit tests for classify-comment with mocked GitHub and agent in tests/unit/classify-comment_test.ts
+- [ ] T017 [P] [US2] Add unit tests for resolve-nit with mocked GitHub and agent in tests/unit/resolve-nit_test.ts
 
 **Checkpoint**: User Stories 1 and 2 work; comment handling and nit resolution verified.
 
@@ -85,16 +84,16 @@
 
 ## Phase 5: User Story 3 - Merge Conflict Resolution (Priority: P3)
 
-**Goal**: When an opted-in PR has merge conflicts, the system detects and resolves them automatically (configurable merge/rebase); if too complex, escalates to the human and does not apply; when resolution adds commits that invalidate approvals, re-requests reviews.
+**Goal**: When an opted-in PR has merge conflicts, the system detects and resolves them (configurable merge/rebase); if too complex, escalates and does not apply; when resolution invalidates approvals, re-requests reviews.
 
 **Independent Test**: Introduce merge conflicts on an opted-in PR; verify automatic resolution or escalation, and that re-review is requested when approvals are invalidated.
 
 ### Implementation for User Story 3
 
-- [ ] T019 [P] [US3] Implement resolve-conflict task in src/core/tasks/resolve-conflict.ts (payload: repo, prNumber, strategy?; return resolved, escalated)
-- [ ] T020 [US3] Implement request-re-review task in src/core/tasks/request-re-review.ts (payload: repo, prNumber) per FR-007; on failure (e.g. permissions), record the failure and surface to the user via a PR comment so the human can re-request manually (spec edge case)
-- [ ] T021 [US3] Escalation path when conflict too complex: post comment or label, do not apply resolution in src/core/tasks/resolve-conflict.ts per FR-008
-- [ ] T022 [US3] Unit tests for resolve-conflict and request-re-review with mocked GitHub and agent in tests/unit/resolve-conflict_test.ts and tests/unit/request-re-review_test.ts
+- [ ] T018 [P] [US3] Implement resolve-conflict task (payload: repo, prNumber, strategy?; resolve or escalate; do not apply when too complex) in src/core/tasks/resolve-conflict.ts
+- [ ] T019 [US3] Implement request-re-review task (payload: repo, prNumber; on failure record and post PR comment per spec) in src/core/tasks/request-re-review.ts
+- [ ] T020 [P] [US3] Add unit tests for resolve-conflict with mocked GitHub and agent in tests/unit/resolve-conflict_test.ts
+- [ ] T021 [P] [US3] Add unit tests for request-re-review with mocked GitHub and agent in tests/unit/request-re-review_test.ts
 
 **Checkpoint**: User Stories 1–3 work; conflict resolution and re-review verified.
 
@@ -102,15 +101,17 @@
 
 ## Phase 6: User Story 4 - Reflection and Learning on Merge (Priority: P4)
 
-**Goal**: When an opted-in PR is merged, the system analyzes how the PR evolved, captures patterns from resolved nits as memory updates (per-repo), and makes learnings available for future PRs in the same repository.
+**Goal**: When an opted-in PR is merged, the system analyzes evolution, captures patterns from resolved nits as memory (per-repo), and makes learnings available for future PRs in the same repository.
 
 **Independent Test**: Merge an opted-in PR that had nits and discussion; verify analysis is produced and learnings are captured for future use in that repo.
 
 ### Implementation for User Story 4
 
-- [ ] T023 [P] [US4] Implement reflect-on-merge task in src/core/tasks/reflect-on-merge.ts (payload: repo, prNumber; return learnings)
-- [ ] T024 [US4] Memory/learnings storage (per-repository) and feed into future PR workflow (e.g. config or runner context when calling agent) in src/core/tasks/reflect-on-merge.ts and wiring in src/core/ or config
-- [ ] T025 [US4] Unit tests for reflect-on-merge with mocked GitHub and agent in tests/unit/reflect-on-merge_test.ts
+- [ ] T022 [P] [US4] Implement reflect-on-merge task (payload: repo, prNumber; return learnings) in src/core/tasks/reflect-on-merge.ts
+- [ ] T023 [US4] Implement per-repository memory storage (read/write learnings) in src/core/memory.ts
+- [ ] T024 [US4] Wire memory into config or runner context for future PRs in src/config.ts
+- [ ] T025 [P] [US4] Add unit tests for reflect-on-merge with mocked GitHub and agent in tests/unit/reflect-on-merge_test.ts
+- [ ] T026 [P] [US4] Add unit tests for memory module in tests/unit/memory_test.ts
 
 **Checkpoint**: All four user stories are independently functional.
 
@@ -120,21 +121,23 @@
 
 **Purpose**: HTTP server and GitHub Actions entrypoints that build TriggerContext and invoke core tasks. No business logic in routes.
 
-- [ ] T026 Implement HTTP server with GET /health and POST /webhook/github in src/transport/http/server.ts per contracts/server-api.md
-- [ ] T027 Implement optional POST /run/analyze, /run/comment, /run/conflicts, /run/reflect in src/transport/http/server.ts per contracts/server-api.md
-- [ ] T028 Contract test for HTTP API (endpoints return expected shapes and error format) in tests/contract/server-api_test.ts
-- [ ] T029 GitHub Actions entry: build TriggerContext from github.context and invoke core tasks in src/transport/actions/index.ts
-- [ ] T030 Entry point for local and Deno Deploy server in src/main.ts
+- [ ] T027 Implement HTTP server with GET /health and POST /webhook/github in src/transport/http/server.ts per contracts/server-api.md
+- [ ] T028 Implement POST /run/analyze, /run/comment, /run/conflicts, /run/reflect in src/transport/http/server.ts per contracts/server-api.md
+- [ ] T029 [P] Contract test for HTTP API (endpoints and error shape) in tests/contract/server-api_test.ts
+- [ ] T030 Implement GitHub Actions entry: build TriggerContext from github.context and invoke core tasks in src/transport/actions/index.ts
+- [ ] T031 Implement entry point for local and Deno Deploy server in src/main.ts
 
 ---
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-**Purpose**: Optional frontend, validation, and cleanup.
+**Purpose**: Optional frontend, delayed-handling comments, docs, and validation.
 
-- [ ] T031 [P] Optional frontend: vanilla HTML/CSS/JS with Open Props and Open Props UI in frontend/ (config or dashboard) if needed per plan
-- [ ] T032 Run quickstart.md validation end-to-end
-- [ ] T033 [P] Documentation updates and code cleanup; ensure "Handling delayed" comment (FR-013) is posted when the nit window is missed (in resolve-nit or after classify-comment when handling is delayed) and when the conflict window is missed (in resolve-conflict)
+- [ ] T032 [P] Add "Handling delayed" comment when nit window is missed in src/core/tasks/resolve-nit.ts
+- [ ] T033 Add "Handling delayed" comment when conflict window is missed in src/core/tasks/resolve-conflict.ts
+- [ ] T034 [P] Optional frontend entry page (vanilla HTML, Open Props) in frontend/index.html per plan
+- [ ] T035 [P] Update or add documentation (README or docs/usage.md) in docs/ or repository root
+- [ ] T036 Run quickstart.md validation end-to-end
 
 ---
 
@@ -142,35 +145,40 @@
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: No dependencies — start immediately.
-- **Foundational (Phase 2)**: Depends on Setup — BLOCKS all user stories.
-- **User Stories (Phase 3–6)**: Depend on Foundational; can proceed in priority order (US1 → US2 → US3 → US4) or in parallel if staffed.
-- **Transport (Phase 7)**: Depends on core tasks (Phases 3–6) being implemented.
-- **Polish (Phase 8)**: Depends on Transport and desired stories complete.
+- **Setup (Phase 1)**: No dependencies — start immediately. T002 after T001.
+- **Foundational (Phase 2)**: Depends on Setup — BLOCKS all user stories. T004–T006 [P]; T007; T008 after T007; T009–T011 [P] after T003–T008.
+- **User Stories (Phase 3–6)**: Depend on Foundational; can run in priority order (US1 → US2 → US3 → US4) or parallel by story if staffed.
+- **Transport (Phase 7)**: Depends on core tasks (Phases 3–6). T027 then T028 (same file); T029 [P]; T030, T031.
+- **Polish (Phase 8)**: Depends on Transport and desired stories. T032, T033 (one file each); T034, T035 [P]; T036 last.
 
 ### User Story Dependencies
 
 - **US1 (P1)**: No dependency on other stories — MVP.
-- **US2 (P2)**: Uses same core (config, runner, github); independently testable.
-- **US3 (P3)**: Uses same core; independently testable.
-- **US4 (P4)**: Uses same core; may read learnings produced by earlier stories.
+- **US2 (P2)**: Same core; independently testable.
+- **US3 (P3)**: Same core; independently testable.
+- **US4 (P4)**: Same core; T023–T024 (memory) support T022.
 
-### Parallel Opportunities
+### Parallel Opportunities (multi-agent / worktrees)
 
-- T003, T005, T006, T007 can run in parallel within their phases.
-- T009, T010, T011 can run in parallel.
-- After Phase 2, US1–US4 can be implemented in parallel by different owners.
-- Within US2: T015 parallel; then T016, T017, T018 sequential/parallel as appropriate.
+- **Phase 1**: T002 after T001.
+- **Phase 2**: T004, T005, T006, T007 in parallel after T003; T008 after T007; T009, T010, T011 in parallel after T008.
+- **Phase 3**: T012, T013 in parallel.
+- **Phase 4**: T014, T015 (then T016, T017 in parallel).
+- **Phase 5**: T018, T019 (then T020, T021 in parallel).
+- **Phase 6**: T022, T023 (then T024; T025, T026 in parallel).
+- **Phase 7**: T029 in parallel with T027–T028, T030, T031 (by file).
+- **Phase 8**: T032, T033 (one file each); T034, T035 in parallel.
 
 ---
 
-## Parallel Example: User Story 1
+## Parallel Example: User Story 1 (assign to two agents)
 
 ```bash
-# After Phase 2, implement analyze-pr and tests:
+# Agent A:
 Task T012: Implement analyze-pr task in src/core/tasks/analyze-pr.ts
-Task T014: Unit tests for analyze-pr in tests/unit/analyze-pr_test.ts
-# Then T013 to wire description and labels.
+
+# Agent B:
+Task T013: Add unit tests for analyze-pr in tests/unit/analyze-pr_test.ts
 ```
 
 ---
@@ -181,7 +189,7 @@ Task T014: Unit tests for analyze-pr in tests/unit/analyze-pr_test.ts
 
 1. Complete Phase 1: Setup
 2. Complete Phase 2: Foundational (CRITICAL)
-3. Complete Phase 3: User Story 1 (analyze-pr, description update, labels)
+3. Complete Phase 3: User Story 1
 4. **STOP and VALIDATE**: Open PR, add opt-in label, verify report in description
 5. Add Phase 7 (HTTP server + webhook) for end-to-end MVP
 
@@ -192,21 +200,21 @@ Task T014: Unit tests for analyze-pr in tests/unit/analyze-pr_test.ts
 3. US2 → test independently → comment handling
 4. US3 → test independently → conflict resolution
 5. US4 → test independently → reflection and learnings
-6. Transport (Phase 7) can be built after US1 for webhook-driven analysis, then extended for other events
+6. Transport (Phase 7) after US1 for webhook-driven analysis, then extend for other events
 
-### Parallel Team Strategy
+### Multi-Agent / Worktree Strategy
 
-1. Team completes Setup + Foundational together.
-2. Developer A: US1 (analyze-pr). Developer B: US2 (classify, resolve-nit). Developer C: US3 (resolve-conflict, request-re-review). Developer D: US4 (reflect-on-merge).
-3. Integrate transport and polish once core tasks are in place.
+- Each task is **one file**, **one outcome** — safe to assign to a single agent or worktree.
+- After Phase 2, stories can be split across agents: Agent A (US1), Agent B (US2), Agent C (US3), Agent D (US4).
+- Within a story, all tasks marked [P] can run in parallel (different files).
+- Merge/integrate after each phase or story; run contract and unit tests before moving on.
 
 ---
 
 ## Notes
 
-- [P] tasks = different files, no dependencies.
-- [Story] label maps task to user story for traceability.
+- [P] = different files, no dependency on other same-phase tasks; safe to run in parallel.
+- [Story] label maps task to user story for traceability and handover.
 - Each user story is independently completable and testable.
-- Contract tests (task interface, agent runner, trigger context, HTTP API) protect boundaries when refactoring.
-- Commit after each task or logical group.
 - Idempotency and conflict-avoid behavior are required in task implementations (per plan and spec).
+- Commit after each task (or logical group) for clean history and rollback.
