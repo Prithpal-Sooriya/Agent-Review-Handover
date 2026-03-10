@@ -1,3 +1,5 @@
+import { MergeStrategy } from "./types/mod.ts";
+
 export interface RunConfig {
   org: string;
   labels: {
@@ -9,7 +11,7 @@ export interface RunConfig {
     nit: number; // in minutes
     conflict: number; // in minutes
   };
-  mergeStrategy: "merge" | "rebase";
+  mergeStrategy: MergeStrategy;
 }
 
 export async function loadConfig(configPath = "config.json"): Promise<RunConfig> {
